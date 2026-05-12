@@ -1,5 +1,6 @@
+import { bcryptAdapter } from "../../config/bcrypt.adapter.js";
 import { UserModel } from "../../data/index.js";
-import { CustomError, RegisterUserDto, UserEntity } from "../../domain/index.js";
+import { CustomError, LoginUserDto, RegisterUserDto, UserEntity } from "../../domain/index.js";
 
 export class AuthService {
     // DI
@@ -11,10 +12,10 @@ export class AuthService {
 
         try {
             const user = new UserModel(registerUserDto)
-            await user.save()
-
+            
             // Encriptar la contraseña
-
+            user.password = bcryptAdapter.hash(registerUserDto.password)
+            await user.save()
             // JWT para mantener la autenticacion del usuario
 
             // Email de confirmacion
@@ -26,6 +27,23 @@ export class AuthService {
             throw CustomError.internalServer(`${error}`)
         }
 
-        return 'todo ok!'
     }
+
+
+    public async loginUser(loginUserDto: LoginUserDto) {
+
+        const user = await UserModel.findOne({email: loginUserDto.email})
+        if(!user) throw CustomError.badRequest('Email not exist')
+        
+        const isMatch = bcryptAdapter.compare(loginUserDto.password, user.password)
+        if(!isMatch) throw CustomError.badRequest('Password is not valid')
+
+        const {password, ...userEntity} = UserEntity.fromObject(user)
+
+        return {
+            user: userEntity,
+            token: 'ABC'
+        }
+    }
+
 }
