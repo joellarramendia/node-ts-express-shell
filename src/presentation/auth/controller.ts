@@ -35,6 +35,13 @@ export class AuthController {
     }
 
     validateEmail = (req: Request, res: Response) => {
-        res.json('validateEmail')
+        const { token } = req.params
+        if (typeof token !== 'string') {
+            return res.status(400).json({ error: 'Invalid token format' });
+        }
+        
+        this.authService.validateEmail(token)
+            .then(() => res.json('Email validated'))
+            .catch(error => this.handleError(error, res))
     }
 }
