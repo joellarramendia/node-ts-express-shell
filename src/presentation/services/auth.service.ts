@@ -12,7 +12,7 @@ export class AuthService {
 
         try {
             const user = new UserModel(registerUserDto)
-            
+
             // Encriptar la contraseña
             user.password = bcryptAdapter.hash(registerUserDto.password)
             await user.save()
@@ -20,9 +20,12 @@ export class AuthService {
 
             // Email de confirmacion
 
-            const {password, ...userEntity} = UserEntity.fromObject(user)
+            const { password, ...userEntity } = UserEntity.fromObject(user)
 
-            return {user: userEntity, token: 'ABC'}
+            const token = await JwtAdapter.generateToken({ id: user.id })
+            if (!token) throw CustomError.internalServer('Error while creating JWT')
+
+            return { user: userEntity, token: token }
         } catch (error) {
             throw CustomError.internalServer(`${error}`)
         }
@@ -32,16 +35,16 @@ export class AuthService {
 
     public async loginUser(loginUserDto: LoginUserDto) {
 
-        const user = await UserModel.findOne({email: loginUserDto.email})
-        if(!user) throw CustomError.badRequest('Email not exist')
-        
+        const user = await UserModel.findOne({ email: loginUserDto.email })
+        if (!user) throw CustomError.badRequest('Email not exist')
+
         const isMatch = bcryptAdapter.compare(loginUserDto.password, user.password)
-        if(!isMatch) throw CustomError.badRequest('Password is not valid')
+        if (!isMatch) throw CustomError.badRequest('Password is not valid')
 
-        const {password, ...userEntity} = UserEntity.fromObject(user)
+        const { password, ...userEntity } = UserEntity.fromObject(user)
 
-        const token = await JwtAdapter.generateToken({id: user.id, email: user.email})
-        if(!token) throw CustomError.internalServer('Error while creating JWT')
+        const token = await JwtAdapter.generateToken({ id: user.id })
+        if (!token) throw CustomError.internalServer('Error while creating JWT')
 
         return {
             user: userEntity,
