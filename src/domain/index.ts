@@ -7,3 +7,5 @@ export * from './dtos/auth/login-user-dto.js'
 export * from './dtos/category/create-category.dto.js'
 
 export * from './dtos/shared/pagination.dto.js'
+
+export * from './dtos/products/create-product.dto.js'
